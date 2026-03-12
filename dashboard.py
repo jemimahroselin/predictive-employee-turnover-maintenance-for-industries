@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # --------------------------------------------------
-# DARK BACKGROUND IMAGE WITH GRADIENT
+# DARK BACKGROUND IMAGE
 # --------------------------------------------------
 
 def add_bg_from_local(image_file):
@@ -29,29 +29,29 @@ def add_bg_from_local(image_file):
         .stApp {{
             background:
             linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.85)),
-            url("data:image/jpg;base64,{encoded}");
+            url("data:image/png;base64,{encoded}");
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
         }}
 
         h1, h2, h3, h4, h5, p, label, div {{
-        color: white !important;
+            color: white !important;
         }}
 
         .stNumberInput input {{
-        background-color: rgba(0,0,0,0.6);
-        color: white;
-        border-radius: 8px;
+            background-color: rgba(0,0,0,0.6);
+            color: white;
+            border-radius: 8px;
         }}
 
         .stButton>button {{
-        background-color:#ff4b4b;
-        color:white;
-        border-radius:10px;
-        height:45px;
-        width:220px;
-        font-size:18px;
+            background-color:#ff4b4b;
+            color:white;
+            border-radius:10px;
+            height:45px;
+            width:220px;
+            font-size:18px;
         }}
 
         </style>
@@ -59,8 +59,8 @@ def add_bg_from_local(image_file):
         unsafe_allow_html=True
     )
 
-# Use dark background image
-add_bg_from_local("dark_bg.jpg")
+# Background image
+add_bg_from_local("company_bg.jpg.png")
 
 # --------------------------------------------------
 # LOAD DATASET
