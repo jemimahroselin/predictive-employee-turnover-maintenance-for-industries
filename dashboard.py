@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # --------------------------------------------------
-# BACKGROUND IMAGE
+# DARK BACKGROUND IMAGE WITH GRADIENT
 # --------------------------------------------------
 
 def add_bg_from_local(image_file):
@@ -27,63 +27,40 @@ def add_bg_from_local(image_file):
         f"""
         <style>
         .stApp {{
-            background-image: url("data:image/jpg;base64,{encoded}");
+            background:
+            linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.85)),
+            url("data:image/jpg;base64,{encoded}");
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
         }}
+
+        h1, h2, h3, h4, h5, p, label, div {{
+        color: white !important;
+        }}
+
+        .stNumberInput input {{
+        background-color: rgba(0,0,0,0.6);
+        color: white;
+        border-radius: 8px;
+        }}
+
+        .stButton>button {{
+        background-color:#ff4b4b;
+        color:white;
+        border-radius:10px;
+        height:45px;
+        width:220px;
+        font-size:18px;
+        }}
+
         </style>
         """,
         unsafe_allow_html=True
     )
 
-add_bg_from_local("company_bg.jpg")
-
-# --------------------------------------------------
-# FULL SCREEN DARK OVERLAY
-# --------------------------------------------------
-
-st.markdown("""
-<style>
-
-.stApp::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.65);
-    z-index: -1;
-}
-
-/* Make text white */
-
-h1, h2, h3, h4, h5, p, label, div {
-color: white !important;
-}
-
-/* Input styling */
-
-.stNumberInput input{
-background-color: rgba(0,0,0,0.6);
-color: white;
-border-radius: 8px;
-}
-
-/* Button styling */
-
-.stButton>button{
-background-color:#ff4b4b;
-color:white;
-border-radius:10px;
-height:45px;
-width:220px;
-font-size:18px;
-}
-
-</style>
-""", unsafe_allow_html=True)
+# Use dark background image
+add_bg_from_local("dark_bg.jpg")
 
 # --------------------------------------------------
 # LOAD DATASET
@@ -129,7 +106,9 @@ model.fit(X_train, y_train)
 
 st.title("AI Employee Retention System")
 
-st.write("Predict whether an employee will stay or leave the company and provide HR suggestions.")
+st.write(
+"Predict whether an employee will stay or leave the company and provide HR suggestions."
+)
 
 # --------------------------------------------------
 # USER INPUT
