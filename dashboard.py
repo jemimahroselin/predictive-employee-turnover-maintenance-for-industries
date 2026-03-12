@@ -1,38 +1,54 @@
 import streamlit as st
 import pandas as pd
+import base64
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 
+
 # -------------------------------
-# PAGE SETTINGS
+# PAGE CONFIG
 # -------------------------------
 
 st.set_page_config(page_title="AI Employee Retention System", layout="wide")
 
-# Background Image
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background-image: url("https://images.unsplash.com/photo-1552664730-d307ca884978");
+
+# -------------------------------
+# BACKGROUND IMAGE FUNCTION
+# -------------------------------
+
+def add_bg_from_local(image_file):
+
+    with open(image_file, "rb") as image:
+        encoded = base64.b64encode(image.read()).decode()
+
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+        background-image: url("data:image/jpg;base64,{encoded}");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
-    }
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
-    .title {
-        text-align:center;
-        font-size:40px;
-        color:white;
-        font-weight:bold;
-    }
-    </style>
-    """,
+
+add_bg_from_local("company_bg.jpg")
+
+
+# -------------------------------
+# TITLE
+# -------------------------------
+
+st.markdown(
+    "<h1 style='text-align:center; color:white;'>AI Employee Retention Intelligence System</h1>",
     unsafe_allow_html=True
 )
 
-st.markdown('<p class="title">AI Employee Retention Intelligence System</p>', unsafe_allow_html=True)
 
 # -------------------------------
 # LOAD DATASET
@@ -44,18 +60,30 @@ df['Attrition'] = df['Attrition'].map({'Yes':1,'No':0})
 
 df = df.drop(['EmployeeCount','Over18','StandardHours'], axis=1)
 
-# Encode categorical columns
+
+# -------------------------------
+# ENCODE DATA
+# -------------------------------
+
 label_encoder = LabelEncoder()
 
 for col in df.columns:
     if df[col].dtype == 'object':
         df[col] = label_encoder.fit_transform(df[col])
 
-# Features
+
+# -------------------------------
+# FEATURES
+# -------------------------------
+
 X = df.drop(['Attrition'], axis=1)
 y = df['Attrition']
 
-# Train model
+
+# -------------------------------
+# TRAIN MODEL
+# -------------------------------
+
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42)
 
@@ -63,8 +91,9 @@ model = RandomForestClassifier(n_estimators=200, random_state=42)
 
 model.fit(X_train, y_train)
 
+
 # -------------------------------
-# EMPLOYEE PREDICTION SECTION
+# EMPLOYEE ANALYSIS
 # -------------------------------
 
 st.header("Employee Attrition Analysis")
@@ -82,11 +111,11 @@ if st.button("Analyze Employee"):
     else:
 
         prediction = model.predict(emp)
+
         probability = model.predict_proba(emp)
 
         risk = probability[0][1] * 100
 
-        # Risk Level
         if risk > 70:
             level = "High Risk"
         elif risk > 40:
@@ -135,6 +164,7 @@ if st.button("Analyze Employee"):
         else:
             st.write("No major risk factors detected")
 
+
         # -------------------------------
         # HR SUGGESTIONS
         # -------------------------------
@@ -145,6 +175,7 @@ if st.button("Analyze Employee"):
         st.write("• Improve employee recognition programs")
         st.write("• Offer flexible work schedules")
         st.write("• Provide salary increments or incentives")
+
 
 # -------------------------------
 # TOP 5 EMPLOYEES LIKELY TO LEAVE
