@@ -5,54 +5,75 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 
+# ---------------------------------------------------
+# PAGE SETTINGS
+# ---------------------------------------------------
 
-# -------------------------------
-# PAGE CONFIG
-# -------------------------------
+st.set_page_config(page_title="AI Employee Retention System",
+                   page_icon="💼",
+                   layout="wide")
 
-st.set_page_config(page_title="AI Employee Retention System", layout="wide")
-
-
-# -------------------------------
-# BACKGROUND IMAGE FUNCTION
-# -------------------------------
+# ---------------------------------------------------
+# BACKGROUND IMAGE
+# ---------------------------------------------------
 
 def add_bg_from_local(image_file):
-
     with open(image_file, "rb") as image:
         encoded = base64.b64encode(image.read()).decode()
 
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
+    st.markdown(f"""
+    <style>
+    .stApp {{
         background-image: url("data:image/jpg;base64,{encoded}");
         background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
+    }}
+    </style>
+    """, unsafe_allow_html=True)
 
 add_bg_from_local("company_bg.jpg")
 
+# ---------------------------------------------------
+# TRANSPARENT BLACK CONTAINER
+# ---------------------------------------------------
 
-# -------------------------------
-# TITLE
-# -------------------------------
+st.markdown("""
+<style>
 
-st.markdown(
-    "<h1 style='text-align:center; color:white;'>AI Employee Retention Intelligence System</h1>",
-    unsafe_allow_html=True
-)
+.mainbox{
+background-color: rgba(0,0,0,0.65);
+padding:40px;
+border-radius:15px;
+}
 
+h1,h2,h3,h4,h5,p,label{
+color:white !important;
+}
 
-# -------------------------------
+.stTextInput>div>div>input{
+background-color: rgba(0,0,0,0.6);
+color:white;
+}
+
+.stNumberInput>div>div>input{
+background-color: rgba(0,0,0,0.6);
+color:white;
+}
+
+.stButton>button{
+background-color:#ff4b4b;
+color:white;
+border-radius:10px;
+height:45px;
+width:220px;
+font-size:18px;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------------------------------------------
 # LOAD DATASET
-# -------------------------------
+# ---------------------------------------------------
 
 df = pd.read_csv("HR-Employee-Attrition.csv")
 
@@ -60,128 +81,91 @@ df['Attrition'] = df['Attrition'].map({'Yes':1,'No':0})
 
 df = df.drop(['EmployeeCount','Over18','StandardHours'], axis=1)
 
-
-# -------------------------------
-# ENCODE DATA
-# -------------------------------
-
+# Encode categorical data
 label_encoder = LabelEncoder()
 
 for col in df.columns:
     if df[col].dtype == 'object':
         df[col] = label_encoder.fit_transform(df[col])
 
-
-# -------------------------------
-# FEATURES
-# -------------------------------
+# ---------------------------------------------------
+# TRAIN MODEL
+# ---------------------------------------------------
 
 X = df.drop(['Attrition'], axis=1)
 y = df['Attrition']
 
+X_train,X_test,y_train,y_test = train_test_split(
+    X,y,test_size=0.2,random_state=42)
 
-# -------------------------------
-# TRAIN MODEL
-# -------------------------------
+model = RandomForestClassifier(n_estimators=200,random_state=42)
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42)
+model.fit(X_train,y_train)
 
-model = RandomForestClassifier(n_estimators=200, random_state=42)
+# ---------------------------------------------------
+# MAIN DASHBOARD
+# ---------------------------------------------------
 
-model.fit(X_train, y_train)
+st.markdown('<div class="mainbox">', unsafe_allow_html=True)
 
+st.title("AI Employee Retention System")
 
-# -------------------------------
-# EMPLOYEE ANALYSIS
-# -------------------------------
+st.write("Predict whether an employee will stay or leave the company and provide HR suggestions.")
 
-st.header("Employee Attrition Analysis")
+emp_id = st.number_input("Enter Employee Number", step=1)
 
-emp_id = st.number_input("Enter Employee Number", min_value=1)
+if st.button("Predict Employee Status"):
 
-if st.button("Analyze Employee"):
-
-    emp = X[X['EmployeeNumber'] == emp_id]
+    emp = X[X['EmployeeNumber']==emp_id]
 
     if emp.empty:
 
-        st.error("Employee not found")
+        st.error("Employee not found in dataset")
 
     else:
 
         prediction = model.predict(emp)
-
         probability = model.predict_proba(emp)
 
-        risk = probability[0][1] * 100
+        risk = probability[0][1]*100
 
-        if risk > 70:
-            level = "High Risk"
-        elif risk > 40:
-            level = "Medium Risk"
+        st.subheader("Attrition Risk Score")
+        st.write(f"**{round(risk,2)} %**")
+
+        if prediction[0]==1:
+
+            st.error("Prediction: Employee likely to LEAVE")
+
+            st.subheader("Reasons & HR Suggestions")
+
+            overtime = df.loc[df['EmployeeNumber']==emp_id,'OverTime'].values[0]
+            satisfaction = df.loc[df['EmployeeNumber']==emp_id,'JobSatisfaction'].values[0]
+            worklife = df.loc[df['EmployeeNumber']==emp_id,'WorkLifeBalance'].values[0]
+            income = df.loc[df['EmployeeNumber']==emp_id,'MonthlyIncome'].values[0]
+
+            if overtime==1:
+                st.write("- High overtime → Reduce workload")
+
+            if satisfaction<=2:
+                st.write("- Low job satisfaction → Improve recognition")
+
+            if worklife<=2:
+                st.write("- Poor work life balance → Flexible schedule")
+
+            if income<4000:
+                st.write("- Low salary → Consider salary increment")
+
         else:
-            level = "Low Risk"
 
-        col1, col2 = st.columns(2)
+            st.success("Prediction: Employee likely to STAY")
 
-        col1.metric("Attrition Risk Score", f"{risk:.2f}%")
-        col2.metric("Risk Level", level)
+            st.write("HR Suggestion: Maintain engagement and growth opportunities")
 
-        if prediction[0] == 1:
-            st.error("Employee likely to LEAVE the company")
-        else:
-            st.success("Employee likely to STAY")
-
-        # -------------------------------
-        # REASONS
-        # -------------------------------
-
-        st.subheader("Possible Reasons for Leaving")
-
-        overtime = df.loc[df['EmployeeNumber']==emp_id,'OverTime'].values[0]
-        satisfaction = df.loc[df['EmployeeNumber']==emp_id,'JobSatisfaction'].values[0]
-        worklife = df.loc[df['EmployeeNumber']==emp_id,'WorkLifeBalance'].values[0]
-        income = df.loc[df['EmployeeNumber']==emp_id,'MonthlyIncome'].values[0]
-
-        reasons = []
-
-        if overtime == 1:
-            reasons.append("High overtime workload")
-
-        if satisfaction <= 2:
-            reasons.append("Low job satisfaction")
-
-        if worklife <= 2:
-            reasons.append("Poor work-life balance")
-
-        if income < 4000:
-            reasons.append("Low salary")
-
-        if reasons:
-            for r in reasons:
-                st.write("•", r)
-        else:
-            st.write("No major risk factors detected")
-
-
-        # -------------------------------
-        # HR SUGGESTIONS
-        # -------------------------------
-
-        st.subheader("HR Recommendations")
-
-        st.write("• Reduce excessive overtime")
-        st.write("• Improve employee recognition programs")
-        st.write("• Offer flexible work schedules")
-        st.write("• Provide salary increments or incentives")
-
-
-# -------------------------------
+# ---------------------------------------------------
 # TOP 5 EMPLOYEES LIKELY TO LEAVE
-# -------------------------------
+# ---------------------------------------------------
 
-st.header("Top 5 Employees Likely to Leave")
+st.subheader("Top 5 Employees Likely to Leave")
 
 probabilities = model.predict_proba(X)
 
@@ -189,26 +173,32 @@ risk_scores = probabilities[:,1]
 
 df['RiskScore'] = risk_scores
 
-top5 = df.sort_values(by='RiskScore', ascending=False).head(5)
+top5 = df.sort_values(by='RiskScore',ascending=False).head(5)
 
-for index, row in top5.iterrows():
+for index,row in top5.iterrows():
 
-    st.subheader(f"Employee ID: {int(row['EmployeeNumber'])}")
+    st.write("Employee ID:",row['EmployeeNumber'])
+    st.write("Risk Score:",round(row['RiskScore']*100,2),"%")
 
-    st.write("Attrition Risk Score:", round(row['RiskScore']*100,2), "%")
+    reasons=[]
 
-    st.write("Possible Reasons:")
+    if row['OverTime']==1:
+        reasons.append("High overtime")
 
-    if row['OverTime'] == 1:
-        st.write("• High overtime workload")
+    if row['MonthlyIncome']<4000:
+        reasons.append("Low salary")
 
-    if row['JobSatisfaction'] <= 2:
-        st.write("• Low job satisfaction")
+    if row['JobSatisfaction']<=2:
+        reasons.append("Low job satisfaction")
 
-    if row['WorkLifeBalance'] <= 2:
-        st.write("• Poor work-life balance")
+    if row['WorkLifeBalance']<=2:
+        reasons.append("Poor work-life balance")
 
-    if row['MonthlyIncome'] < 4000:
-        st.write("• Low salary")
+    if len(reasons)==0:
+        reasons.append("General attrition risk")
 
-    st.markdown("---")
+    st.write("Possible Reasons:",", ".join(reasons))
+
+    st.write("-------------------------------")
+
+st.markdown("</div>", unsafe_allow_html=True)
