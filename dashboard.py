@@ -5,59 +5,73 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 
-# ---------------------------------------------------
-# PAGE SETTINGS
-# ---------------------------------------------------
+# --------------------------------------------------
+# PAGE CONFIG
+# --------------------------------------------------
 
-st.set_page_config(page_title="AI Employee Retention System",
-                   page_icon="💼",
-                   layout="wide")
+st.set_page_config(
+    page_title="AI Employee Retention System",
+    page_icon="💼",
+    layout="wide"
+)
 
-# ---------------------------------------------------
+# --------------------------------------------------
 # BACKGROUND IMAGE
-# ---------------------------------------------------
+# --------------------------------------------------
 
 def add_bg_from_local(image_file):
     with open(image_file, "rb") as image:
         encoded = base64.b64encode(image.read()).decode()
 
-    st.markdown(f"""
-    <style>
-    .stApp {{
-        background-image: url("data:image/jpg;base64,{encoded}");
-        background-size: cover;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/jpg;base64,{encoded}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 add_bg_from_local("company_bg.jpg")
 
-# ---------------------------------------------------
-# TRANSPARENT BLACK CONTAINER
-# ---------------------------------------------------
+# --------------------------------------------------
+# FULL SCREEN DARK OVERLAY
+# --------------------------------------------------
 
 st.markdown("""
 <style>
 
-.mainbox{
-background-color: rgba(0,0,0,0.65);
-padding:40px;
-border-radius:15px;
+.stApp::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.65);
+    z-index: -1;
 }
 
-h1,h2,h3,h4,h5,p,label{
-color:white !important;
+/* Make text white */
+
+h1, h2, h3, h4, h5, p, label, div {
+color: white !important;
 }
 
-.stTextInput>div>div>input{
+/* Input styling */
+
+.stNumberInput input{
 background-color: rgba(0,0,0,0.6);
-color:white;
+color: white;
+border-radius: 8px;
 }
 
-.stNumberInput>div>div>input{
-background-color: rgba(0,0,0,0.6);
-color:white;
-}
+/* Button styling */
 
 .stButton>button{
 background-color:#ff4b4b;
@@ -71,9 +85,9 @@ font-size:18px;
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------------------------------------------
+# --------------------------------------------------
 # LOAD DATASET
-# ---------------------------------------------------
+# --------------------------------------------------
 
 df = pd.read_csv("HR-Employee-Attrition.csv")
 
@@ -81,42 +95,51 @@ df['Attrition'] = df['Attrition'].map({'Yes':1,'No':0})
 
 df = df.drop(['EmployeeCount','Over18','StandardHours'], axis=1)
 
-# Encode categorical data
+# --------------------------------------------------
+# ENCODE DATA
+# --------------------------------------------------
+
 label_encoder = LabelEncoder()
 
 for col in df.columns:
     if df[col].dtype == 'object':
         df[col] = label_encoder.fit_transform(df[col])
 
-# ---------------------------------------------------
+# --------------------------------------------------
 # TRAIN MODEL
-# ---------------------------------------------------
+# --------------------------------------------------
 
 X = df.drop(['Attrition'], axis=1)
 y = df['Attrition']
 
-X_train,X_test,y_train,y_test = train_test_split(
-    X,y,test_size=0.2,random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
 
-model = RandomForestClassifier(n_estimators=200,random_state=42)
+model = RandomForestClassifier(
+    n_estimators=200,
+    random_state=42
+)
 
-model.fit(X_train,y_train)
+model.fit(X_train, y_train)
 
-# ---------------------------------------------------
-# MAIN DASHBOARD
-# ---------------------------------------------------
-
-st.markdown('<div class="mainbox">', unsafe_allow_html=True)
+# --------------------------------------------------
+# TITLE
+# --------------------------------------------------
 
 st.title("AI Employee Retention System")
 
 st.write("Predict whether an employee will stay or leave the company and provide HR suggestions.")
 
+# --------------------------------------------------
+# USER INPUT
+# --------------------------------------------------
+
 emp_id = st.number_input("Enter Employee Number", step=1)
 
 if st.button("Predict Employee Status"):
 
-    emp = X[X['EmployeeNumber']==emp_id]
+    emp = X[X['EmployeeNumber'] == emp_id]
 
     if emp.empty:
 
@@ -127,12 +150,13 @@ if st.button("Predict Employee Status"):
         prediction = model.predict(emp)
         probability = model.predict_proba(emp)
 
-        risk = probability[0][1]*100
+        risk = probability[0][1] * 100
 
         st.subheader("Attrition Risk Score")
-        st.write(f"**{round(risk,2)} %**")
 
-        if prediction[0]==1:
+        st.write(f"{round(risk,2)} %")
+
+        if prediction[0] == 1:
 
             st.error("Prediction: Employee likely to LEAVE")
 
@@ -143,16 +167,16 @@ if st.button("Predict Employee Status"):
             worklife = df.loc[df['EmployeeNumber']==emp_id,'WorkLifeBalance'].values[0]
             income = df.loc[df['EmployeeNumber']==emp_id,'MonthlyIncome'].values[0]
 
-            if overtime==1:
+            if overtime == 1:
                 st.write("- High overtime → Reduce workload")
 
-            if satisfaction<=2:
+            if satisfaction <= 2:
                 st.write("- Low job satisfaction → Improve recognition")
 
-            if worklife<=2:
+            if worklife <= 2:
                 st.write("- Poor work life balance → Flexible schedule")
 
-            if income<4000:
+            if income < 4000:
                 st.write("- Low salary → Consider salary increment")
 
         else:
@@ -161,9 +185,9 @@ if st.button("Predict Employee Status"):
 
             st.write("HR Suggestion: Maintain engagement and growth opportunities")
 
-# ---------------------------------------------------
+# --------------------------------------------------
 # TOP 5 EMPLOYEES LIKELY TO LEAVE
-# ---------------------------------------------------
+# --------------------------------------------------
 
 st.subheader("Top 5 Employees Likely to Leave")
 
@@ -173,32 +197,31 @@ risk_scores = probabilities[:,1]
 
 df['RiskScore'] = risk_scores
 
-top5 = df.sort_values(by='RiskScore',ascending=False).head(5)
+top5 = df.sort_values(by='RiskScore', ascending=False).head(5)
 
-for index,row in top5.iterrows():
+for index, row in top5.iterrows():
 
-    st.write("Employee ID:",row['EmployeeNumber'])
-    st.write("Risk Score:",round(row['RiskScore']*100,2),"%")
+    st.write("Employee ID:", row['EmployeeNumber'])
 
-    reasons=[]
+    st.write("Risk Score:", round(row['RiskScore']*100,2), "%")
 
-    if row['OverTime']==1:
+    reasons = []
+
+    if row['OverTime'] == 1:
         reasons.append("High overtime")
 
-    if row['MonthlyIncome']<4000:
+    if row['MonthlyIncome'] < 4000:
         reasons.append("Low salary")
 
-    if row['JobSatisfaction']<=2:
+    if row['JobSatisfaction'] <= 2:
         reasons.append("Low job satisfaction")
 
-    if row['WorkLifeBalance']<=2:
-        reasons.append("Poor work-life balance")
+    if row['WorkLifeBalance'] <= 2:
+        reasons.append("Poor work life balance")
 
-    if len(reasons)==0:
+    if len(reasons) == 0:
         reasons.append("General attrition risk")
 
-    st.write("Possible Reasons:",", ".join(reasons))
+    st.write("Possible Reasons:", ", ".join(reasons))
 
-    st.write("-------------------------------")
-
-st.markdown("</div>", unsafe_allow_html=True)
+    st.write("-----------------------------")
