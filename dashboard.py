@@ -4,11 +4,40 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 
+# -------------------------------
+# PAGE SETTINGS
+# -------------------------------
+
 st.set_page_config(page_title="AI Employee Retention System", layout="wide")
 
-st.title("AI Employee Retention Intelligence System")
+# Background Image
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-image: url("https://images.unsplash.com/photo-1552664730-d307ca884978");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
 
-# Load Dataset
+    .title {
+        text-align:center;
+        font-size:40px;
+        color:white;
+        font-weight:bold;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown('<p class="title">AI Employee Retention Intelligence System</p>', unsafe_allow_html=True)
+
+# -------------------------------
+# LOAD DATASET
+# -------------------------------
+
 df = pd.read_csv("HR-Employee-Attrition.csv")
 
 df['Attrition'] = df['Attrition'].map({'Yes':1,'No':0})
@@ -31,13 +60,14 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42)
 
 model = RandomForestClassifier(n_estimators=200, random_state=42)
+
 model.fit(X_train, y_train)
 
-# --------------------------------
-# Employee Prediction Section
-# --------------------------------
+# -------------------------------
+# EMPLOYEE PREDICTION SECTION
+# -------------------------------
 
-st.header("Employee Attrition Prediction")
+st.header("Employee Attrition Analysis")
 
 emp_id = st.number_input("Enter Employee Number", min_value=1)
 
@@ -46,9 +76,11 @@ if st.button("Analyze Employee"):
     emp = X[X['EmployeeNumber'] == emp_id]
 
     if emp.empty:
+
         st.error("Employee not found")
 
     else:
+
         prediction = model.predict(emp)
         probability = model.predict_proba(emp)
 
@@ -72,8 +104,11 @@ if st.button("Analyze Employee"):
         else:
             st.success("Employee likely to STAY")
 
-        # Reasons
-        st.subheader("Possible Reasons")
+        # -------------------------------
+        # REASONS
+        # -------------------------------
+
+        st.subheader("Possible Reasons for Leaving")
 
         overtime = df.loc[df['EmployeeNumber']==emp_id,'OverTime'].values[0]
         satisfaction = df.loc[df['EmployeeNumber']==emp_id,'JobSatisfaction'].values[0]
@@ -100,17 +135,20 @@ if st.button("Analyze Employee"):
         else:
             st.write("No major risk factors detected")
 
-        # HR Suggestions
+        # -------------------------------
+        # HR SUGGESTIONS
+        # -------------------------------
+
         st.subheader("HR Recommendations")
 
         st.write("• Reduce excessive overtime")
-        st.write("• Improve employee recognition")
+        st.write("• Improve employee recognition programs")
         st.write("• Offer flexible work schedules")
         st.write("• Provide salary increments or incentives")
 
-# --------------------------------
-# Top 5 Employees Likely to Leave
-# --------------------------------
+# -------------------------------
+# TOP 5 EMPLOYEES LIKELY TO LEAVE
+# -------------------------------
 
 st.header("Top 5 Employees Likely to Leave")
 
@@ -122,6 +160,24 @@ df['RiskScore'] = risk_scores
 
 top5 = df.sort_values(by='RiskScore', ascending=False).head(5)
 
-top5_display = top5[['EmployeeNumber','RiskScore','MonthlyIncome','JobSatisfaction','WorkLifeBalance']]
+for index, row in top5.iterrows():
 
-st.table(top5_display)
+    st.subheader(f"Employee ID: {int(row['EmployeeNumber'])}")
+
+    st.write("Attrition Risk Score:", round(row['RiskScore']*100,2), "%")
+
+    st.write("Possible Reasons:")
+
+    if row['OverTime'] == 1:
+        st.write("• High overtime workload")
+
+    if row['JobSatisfaction'] <= 2:
+        st.write("• Low job satisfaction")
+
+    if row['WorkLifeBalance'] <= 2:
+        st.write("• Poor work-life balance")
+
+    if row['MonthlyIncome'] < 4000:
+        st.write("• Low salary")
+
+    st.markdown("---")
